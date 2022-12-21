@@ -1,0 +1,57 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <div class="container mt-3">
+        <h1>{{ user.username }}</h1>
+        {% csrf_token %}
+        {% if user != request.user and user.is_authenticated %}
+        {% if is_following %} 
+         <button class="btn btn-secondary unfollow-btn" data-user-id="{{ user.id }}">Unfollow</button>
+          <!-- <button class="btn btn-secondary unfollow-btn" data-user-id="{{ user.id }}" {% if not is_following %}style="display: none;"{% endif %}>Unfollow</button> -->
+        {% else %}
+        <!-- <button class="btn btn-secondary follow-btn" data-user-id="{{ user.id }}" {% if is_following %}style="display: none;"{% endif %}>Follow</button> -->
+          <button class="btn btn-primary follow-btn" data-user-id="{{ user.id }}">Follow</button>
+        {% endif %}
+      {% endif %}      
+      
+      <div class="row mb-4">
+        <div class="col-6">
+            <h5>Following</h5>
+            <span class="badge badge-primary">{{ user.follower.count }}</span>
+        </div>
+        <div class="col-6">
+            <h5>Followers</h5>
+            <span class="badge badge-primary">{{ user.followed.count }}</span>
+        </div>
+    </div>     
+        <h3>{{ user.username }}'s' Posts</h3>
+        {% for post in posts %}
+            <div class="card mt-3" id="post-{{ post.id }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ post.user.username }}</h5>
+                    <p class="card-text">{{ post.text }}</p>
+                    <p class="card-text"><small class="text-muted">{{ post.created_at }}</small></p>
+                    <button class="btn btn-primary {% if post.is_liked_by_user %}active{% endif %} like-btns" data-post-id="{{ post.id }}">
+                        Like <span class="badge badge-light">{{ post.like_count }}</span>
+                    </button>
+                    {% if post.user == user %}
+                        <a href="#" class="btn btn-secondary edit-button" data-post-id="{{ post.id }}">Edit</a>
+                        <button class="btn btn-secondary save-button" data-post-id="{{ post.id }}" style="display: none;">Save</button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if is_paginated %}
+            {% if page_obj.has_previous %}
+                <a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        {% endif %}
+
+    </div>
+{% endblock %}
+

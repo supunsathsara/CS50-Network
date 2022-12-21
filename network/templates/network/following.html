@@ -1,0 +1,38 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <div class="container mt-3">
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'new_post' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea class="form-control" name="text" placeholder="What's happening?" rows="3"></textarea>
+                    <input type="submit" value="Post" class="btn btn-primary mt-2">
+                </div>
+            </form>
+        {% endif %}
+
+        {% for post in posts %}
+            <div class="card mt-3" id="post-{{ post.id }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ post.user.username }}</h5>
+                    <p class="card-text">{{ post.text }}</p>
+                    <p class="card-text"><small class="text-muted">{{ post.created_at }}</small></p>
+                    <a href="{% url 'like_post' post.id %}" class="btn btn-primary {% if post.is_liked_by_user %}active{% endif %}">
+                        Like <span class="badge badge-light">{{ post.like_count }}</span>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if is_paginated %}
+            {% if page_obj.has_previous %}
+                <a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
