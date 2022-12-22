@@ -16,11 +16,35 @@ document.addEventListener('DOMContentLoaded', () => {
       })
         .then((response) => response.json())
         .then((data) => {
-          // Append the new post to the list of posts
-          const postList = document.querySelector('#post-list');
-          const newPost = createPostElement(data);
-          postList.prepend(newPost);
+          newPostForm.reset();
+          location.reload();
         });
+    });
+  }
+
+  // Handle delete button clicks
+  const deleteButtons = document.querySelectorAll('.delete-button');
+  if (deleteButtons) {
+    deleteButtons.forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        const postId = event.target.dataset.postId;
+        fetch(`/delete_post/${postId}/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Remove the post element from the page
+              const postElement = document.querySelector(`#post-${postId}`);
+              postElement.remove();
+            }
+          });
+      });
     });
   }
 
@@ -38,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     button.addEventListener('click', (event) => {
       event.preventDefault();
-      //const postId = button.getAttribute('data-post-id');
       fetch(`/like_post/${postId}/`, {
         method: 'POST',
         headers: {
@@ -133,8 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
   //profile follow unfollow
   const followButton = document.querySelector('.follow-btn');
   const unfollowButton = document.querySelector('.unfollow-btn');
-  //console.log(followButton);
-  //console.log(unfollowButton);
   if (followButton) {
     followButton.addEventListener('click', (event) => {
       event.preventDefault();
@@ -150,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .then((data) => {
           if (data.success) {
             followButton.style.display = 'none';
-            //unfollowButton.style.display = 'inline-block';
             //refresh page
             location.reload();
           } else {
@@ -175,9 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
-            //followButton.style.display = 'inline-block';
             location.reload();
-            //unfollowButton.style.display = 'none';
           } else {
             alert('Error');
           }
@@ -185,19 +203,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-function createPostElement(data) {
-  // Create a new post element based on the data
-  const post = document.createElement('li');
-  post.classList.add('list-group-item');
-  post.innerHTML = `
-          <div>
-            <strong>${data.user}</strong>
-            <span class="text-muted">${data.created_at}</span>
-            <form class="edit-post-form" data-post-id="${data.id}" style="display: none;">
-        <textarea class="form-control">${data.text}</textarea>
-        <button type="submit" class="btn btn-primary mt-2">Save</button>
-      </form>
-    `;
-  return post;
-}

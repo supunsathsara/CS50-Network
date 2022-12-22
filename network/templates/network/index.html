@@ -16,7 +16,7 @@
         {% for post in posts %}
             <div class="card mt-3" id="post-{{ post.id }}">
                 <div class="card-body">
-                    <h5 class="card-title"><a href="/profile/{{ post.user.username }}">{{ post.user.username }}</a></h5>
+                    <h5 class="card-title"><a href="{% url 'profile' post.user.username %}">{{ post.user.username }}</a></h5>
                     <p class="card-text">{{ post.text }}</p>
                     <p class="card-text"><small class="text-muted">{{ post.created_at }}</small></p>
                     {% if user.is_authenticated %}
@@ -24,7 +24,8 @@
                         Like <span class="badge badge-light">{{ post.like_count }}</span>
                     </button>
                     {% if post.user == user %}
-                        <a href="#" class="btn btn-secondary edit-button" data-post-id="{{ post.id }}">Edit</a>
+                        <button class="btn btn-secondary delete-button" data-post-id="{{ post.id }}">Delete</button>
+                        <button class="btn btn-secondary edit-button" data-post-id="{{ post.id }}">Edit</button>
                         <button class="btn btn-secondary save-button" data-post-id="{{ post.id }}" style="display: none;">Save</button>
                     {% endif %}
                     {% endif %}

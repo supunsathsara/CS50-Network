@@ -1,14 +1,13 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import (
-    HttpResponse,
     HttpResponseForbidden,
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
 )
 from django.urls import reverse
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, render
 from .models import User, Post, Relationship, Like
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth.decorators import login_required
@@ -69,17 +68,6 @@ def register(request):
         return render(request, "network/register.html")
 
 
-# def index(request):
-#     posts = Post.objects.all().order_by("-created_at")
-#     # Add the is_being_edited flag to each post
-#     for post in posts:
-#         if post.is_being_edited:
-#             post.is_being_edited = True
-#         else:
-#             post.is_being_edited = False
-#     return render(request, "network/index.html", {"posts": posts})
-
-
 def index(request):
     posts = Post.objects.order_by("-created_at").all()
 
@@ -120,10 +108,36 @@ def new_post(request):
         request_data = json.loads(request_body)
         text = request_data["text"]
         post = Post.objects.create(user=request.user, text=text)
-        return redirect("index")
+        post_data = {
+            "id": post.id,
+            "text": post.text,
+            "created_at": post.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "author": {
+                "id": post.user.id,
+                "username": post.user.username,
+            },
+        }
+        return JsonResponse(post_data)
     else:
         # display the form
-        return render(request, "network/new_post.html")
+        return JsonResponse({"status": "error"})
+
+
+@login_required
+def delete_post(request, post_id):
+    if request.method == "POST":
+        # Get the post to delete
+        post = Post.objects.get(id=post_id)
+        # Make sure the user is the owner of the post
+        if post.user == request.user:
+            post.delete()
+            return JsonResponse({"success": True})
+        else:
+            return JsonResponse(
+                {"success": False, "error": "You are not the owner of this post."}
+            )
+    else:
+        return JsonResponse({"success": False, "error": "Invalid request method."})
 
 
 @login_required
@@ -189,17 +203,6 @@ def like_post(request, post_id):
         return JsonResponse(data)
 
 
-# @login_required
-# def like_post(request, post_id):
-#     post = Post.objects.get(id=post_id)
-#     if request.method == "POST":
-#         # handle form submission
-#         like, created = Like.objects.get_or_create(user=request.user, post=post)
-#         if not created:
-#             like.delete()
-#         return redirect("index")
-
-
 @login_required
 def profile(request, username):
     user = User.objects.get(username=username)
@@ -263,32 +266,3 @@ def unfollow_user(request, user_id):
         relationship.delete()
     # Redirect the user back to the profile page
     return JsonResponse({"success": True})
-
-
-# def profile(request, username):
-#     user = User.objects.get(username=username)
-#     posts = Post.objects.filter(user=user).order_by("-created_at")
-#     is_following = Relationship.objects.filter(
-#         follower=request.user, followed=user
-#     ).exists()
-#     return render(
-#         request,
-#         "network/profile.html",
-#         {"user": user, "posts": posts, "is_following": is_following},
-#     )
-
-
-# @login_required
-# def follow(request, user_id):
-#     user_to_follow = get_object_or_404(User, id=user_id)
-#     Relationship.objects.create(follower=request.user, followed=user_to_follow)
-#     return redirect("profile", username=user_to_follow.username)
-
-
-# @login_required
-# def unfollow(request, user_id):
-#     user_to_unfollow = get_object_or_404(User, id=user_id)
-#     Relationship.objects.filter(
-#         follower=request.user, followed=user_to_unfollow
-#     ).delete()
-#     return redirect("profile", username=user_to_unfollow.username)
